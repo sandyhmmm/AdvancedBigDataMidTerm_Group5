@@ -1,0 +1,69 @@
+Instructions for running mosquitto:
+
+This program needs three terminal windows
+
+//Run the command to start a spark emr cluster, with spark pre-installed, returns a cluster-id on console, which can be used for connecting
+
+aws emr create-cluster --name SparkClusterCLI --release-label emr-4.0.0 --instance-type m3.xlarge --instance-count 3 --ec2-attributes KeyName=AKIAIJ25O5FYMDAFXIXA  --applications Name=Spark --ec2-attributes InstanceProfile=EMR_EC2_DefaultRole,KeyName=SparkKeyPair --service-role EMR_DefaultRole
+
+
+//Use the cluster id from the above command for cluster-id and use the pem file
+aws emr ssh --cluster-id {{cluster-id}} --key-pair-file {{SparkKeyPair.pem}}
+
+
+//Creating temporary directory for downloading software
+mkdir -p /usr/tmp/mubeen
+
+cd /usr/tmp/mubeen
+
+
+//Getting mosquitto 1.2
+
+wget http://mosquitto.org/files/source/mosquitto-1.2.3.tar.gz
+
+tar xzf mosquitto-1.2.3.tar.gz
+
+cd mosquitto-1.2.3
+
+//Building mosquitto
+make
+
+//Installing mosquitto
+sudo make install
+
+cd ..
+
+
+//Download pre-built spark, I was not able to run this against the spark which comes with emr
+wget http://psg.mtu.edu/pub/apache/spark/spark-1.4.1/spark-1.4.1-bin-hadoop2.6.tgz
+
+tar xzf spark-1.4.1-bin-hadoop2.6.tgz
+
+cd spark-1.4.1-bin-hadoop2.6
+
+
+// Start mosquitto, type the below in the console
+
+mosquitto
+
+//Open Terminal 2
+
+//Connect into emr
+aws emr ssh --cluster-id {{cluster-id}} --key-pair-file {{SparkKeyPair.pem}}
+
+cd /usr/tmp/mubeen/spark-1.4.1-bin-hadoop2.6
+
+// Run the mosquitto publisher
+bin/run-example org.apache.spark.examples.streaming.MQTTPublisher tcp://localhost:1883 foo
+
+
+//Open Terminal 3
+
+//Connect into emr
+aws emr ssh --cluster-id {{cluster-id}} --key-pair-file {{SparkKeyPair.pem}}
+
+cd /usr/tmp/mubeen/spark-1.4.1-bin-hadoop2.6
+
+
+// Run the mosquitto wordcount
+bin/run-example org.apache.spark.examples.streaming.MQTTWordCount tcp://localhost:1883 foo

@@ -1,0 +1,56 @@
+
+
+//Run the command to start a spark emr cluster, with spark pre-installed, returns a cluster-id on console, which can be used for connecting
+
+aws emr create-cluster --name SparkClusterCLI --release-label emr-4.0.0 --instance-type m3.xlarge --instance-count 3 --ec2-attributes KeyName=AKIAIJ25O5FYMDAFXIXA  --applications Name=Spark --ec2-attributes InstanceProfile=EMR_EC2_DefaultRole,KeyName=SparkKeyPair --service-role EMR_DefaultRole
+
+//Use the cluster id from the above command for cluster-id and use the pem file
+aws emr ssh --cluster-id {{cluster-id}} --key-pair-file {{SparkKeyPair.pem}}
+
+
+//Create a bucket hdfs-demo on S3
+
+
+//Run spark hdfs wordcount
+bin/run-example org.apache.spark.examples.streaming.HdfsWordCount s3://hdfs-demo/
+
+Upload files into hdfs-demo bucket on s3 and see the results
+
+
+For local hdfs:
+
+//Create hadoop directoy:
+
+hadoop fs -mkdir /hdfswordcount
+
+
+//Go into the spark installation
+cd /usr/lib/spark
+
+
+//Run spark hdfs wordcount
+bin/run-example org.apache.spark.examples.streaming.HdfsWordCount /hdfswordcount
+
+
+//Go into the tmp folder to create files
+cd /usr/tmp/
+
+
+//Create files
+touch word1.txt
+touch word2.txt
+
+vim word1.txt
+
+One Two Three
+One Two
+
+vim word2.txt
+One Two Two
+Two One
+
+//Copy files to /hdfswordcount
+hadoop fs -put word1.txt /hdfswordcount/
+
+
+Should be able to see results

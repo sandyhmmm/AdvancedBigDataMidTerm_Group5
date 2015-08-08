@@ -1,0 +1,95 @@
+Instructions for running flume
+
+
+This program needs three terminal windows
+
+
+On Terminal 1:
+
+//Run the command to start a spark emr cluster, with spark pre-installed, returns a cluster-id on console, which can be used for connecting
+
+
+aws emr create-cluster --name SparkClusterCLI --release-label emr-4.0.0 --instance-type m3.xlarge --instance-count 3 --ec2-attributes KeyName=AKIAIJ25O5FYMDAFXIXA  --applications Name=Spark --ec2-attributes InstanceProfile=EMR_EC2_DefaultRole,KeyName=SparkKeyPair --service-role EMR_DefaultRole
+
+
+//Use the cluster id from the above command for cluster-id and use the pem file
+aws emr ssh --cluster-id {{cluster-id}} --key-pair-file {{SparkKeyPair.pem}}
+
+
+//Creating temporary directory for downloading software
+mkdir -p /usr/tmp/mubeen
+
+cd /usr/tmp/mubeen
+
+//Getting Flume-1.6
+
+wget http://apache.mirror.triple-it.nl/flume/1.6.0/apache-flume-1.6.0-bin.tar.gz
+
+tar xvzf apache-flume-1.6.0-bin.tar.gz
+
+rm apache-flume-1.6.0-bin.tar.gz
+
+//Creating a conf file
+cp apache-flume-1.6.0-bin/conf/flume-conf.properties.template apache-flume-1.6.0-bin/conf/flume.conf
+
+cd apache-flume-1.6.0-bin/
+
+//Open the vim file to add configuration
+vim conf/flume.conf
+
+
+//Remove all the lines in flume.conf and add the below configuration
+agent.sources = javaavrorpc
+agent.channels = memoryChannel
+agent.sinks = sparkstreaming
+agent.sources.javaavrorpc.type = netcat
+agent.sources.javaavrorpc.bind = localhost
+agent.sources.javaavrorpc.port = 42222
+agent.sources.javaavrorpc.channels = memoryChannel
+agent.sinks.sparkstreaming.type = avro
+agent.sinks.sparkstreaming.hostname = localhost
+agent.sinks.sparkstreaming.port = 43333
+agent.sinks.sparkstreaming.channel = memoryChannel
+agent.channels.memoryChannel.type = memory
+agent.channels.memoryChannel.capacity = 10000
+agent.channels.memoryChannel.transactionCapacity = 1000
+
+cd ..
+
+
+//Download pre-built spark, I was not able to run this against the spark which comes with emr
+wget http://psg.mtu.edu/pub/apache/spark/spark-1.4.1/spark-1.4.1-bin-hadoop2.6.tgz
+
+tar xzf spark-1.4.1-bin-hadoop2.6.tgz
+
+
+
+cd apache-flume-1.6.0-bin/
+
+
+//Open Terminal 2
+
+//Connect into emr
+aws emr ssh --cluster-id {{cluster-id}} --key-pair-file {{SparkKeyPair.pem}}
+
+//Go to the downloaded spark directory
+cd /usr/tmp/mubeen/spark-1.4.1-bin-hadoop2.6
+
+//Run the FlumeEventCount first
+bin/run-example org.apache.spark.examples.streaming.FlumeEventCount localhost 43333
+
+
+//In Terminal 1, run this command to start flume
+
+cd /usr/tmp/mubeen/apache-flume-1.6.0-bin/
+
+bin/flume-ng agent --conf conf --conf-file conf/flume.conf --name agent -Dflume.root.logger=INFO,console
+
+
+//Open Terminal 3
+
+//Connect into emr
+aws emr ssh --cluster-id {{cluster-id}} --key-pair-file {{SparkKeyPair.pem}}
+
+//Use telnet to write to netcat
+telnet localhost 42222
