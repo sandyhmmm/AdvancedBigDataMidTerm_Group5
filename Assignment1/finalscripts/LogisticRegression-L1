@@ -1,0 +1,59 @@
+import numpy as np
+from sklearn import linear_model
+from sklearn.cross_validation import train_test_split
+from sklearn import metrics
+from sklearn import preprocessing
+
+#Load and parse the data 
+sparkHome = os.environ.get('SPARK_HOME')
+fileLocation = sparkHome + "/Assignment1/winequality-white.csv";
+f = open(fileLocation);
+f.readline();
+data = np.loadtxt(fname=f,delimiter = ';');
+X = data[:,0:10];
+#Converting it to binary classification
+Y = np.where(data[:,11] >= 7, 1, 0);
+
+#Split training/test sets
+X_train,X_test,Y_train,Y_test = train_test_split(X,Y,test_size=0.40);
+
+#Scaling features 
+scaler = preprocessing.StandardScaler().fit(X_train);
+X_train = scaler.transform(X_train);
+X_test = scaler.transform(X_test);
+
+#Algorithm being used
+clf = linear_model.LogisticRegression(penalty="l1")
+
+#Training the model
+clf.fit(X_train, Y_train);
+
+print clf.coef_
+print clf.intercept_
+
+#Predicting on test set
+Y_train_pred = clf.predict(X_test);
+
+#Printing out accuracy score
+print metrics.accuracy_score(Y_test,Y_train_pred);
+
+#Printing classification report(precision,recall,f1-score,support)
+print metrics.classification_report(Y_test,Y_train_pred)
+
+#Printing confusion matrix
+print metrics.confusion_matrix(Y_test,Y_train_pred)
+
+Results:
+[[ 0.47841828 -0.40148397 -0.13062474  1.52233312 -0.20943638  0.22003496
+  -0.09182838 -2.04748646  0.53443378  0.31098575  0.09704594]]
+[-1.67879698]
+0.805102040816
+             precision    recall  f1-score   support
+
+          0       0.83      0.95      0.88      1542
+          1       0.59      0.27      0.37       418
+
+avg / total       0.78      0.81      0.78      1960
+
+[[1465   77]
+ [ 305  113]]

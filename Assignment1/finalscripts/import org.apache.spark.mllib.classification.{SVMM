@@ -1,0 +1,46 @@
+import org.apache.spark.mllib.classification.{SVMModel, SVMWithSGD}
+import org.apache.spark.mllib.evaluation.MulticlassMetrics
+import org.apache.spark.mllib.util.MLUtils
+import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.mllib.linalg.Vectors
+import org.apache.spark.mllib.feature.StandardScaler
+
+// Declaring demlitter
+val Delimeter = ";"
+val textFile = sc.textFile("Assignment1/test.csv")
+val data = textFile.map { line =>
+val parts = line.split(Delimeter)
+LabeledPoint(parts(0).toDouble, Vectors.dense(parts.slice(1,10).map(x => x.toDouble).toArray))
+}
+
+
+
+// Split data into training (60%) and test (40%).
+val splits = data.randomSplit(Array(0.6, 0.4), seed = 11L)
+val training = splits(0).cache()
+val test = splits(1)
+
+
+// Run training algorithm to build the model
+val numIterations = 100
+
+val ss = new StandardScaler().fit(training.map(x=>x.features))
+
+val training1 = training.map(x=>(x.label, ss.transform(x.features)))
+
+print(training1)
+
+val training2 = training1.map(y=> LabeledPoint(y._1,y._2))
+
+val model = SVMWithSGD.train(training2, numIterations)
+
+// Clear the default threshold.
+model.clearThreshold()
+
+// Compute raw scores on the test set.
+val predictionAndLabels = test.map { case LabeledPoint(label, features) =>
+  val prediction = model.predict(ss.fit(features))
+  (prediction, ss.label(label))
+}
+
+val accurtimes = predictionAndLabels.filter(r => r._1 == r._2)

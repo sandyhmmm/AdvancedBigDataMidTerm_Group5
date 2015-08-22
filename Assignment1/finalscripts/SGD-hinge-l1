@@ -1,0 +1,60 @@
+import numpy as np
+from sklearn import linear_model
+from sklearn.cross_validation import train_test_split
+from sklearn import metrics
+from sklearn import preprocessing
+
+#Load and parse the data 
+sparkHome = os.environ.get('SPARK_HOME')
+fileLocation = sparkHome + "/Assignment1/winequality-white.csv";
+f = open(fileLocation);
+f.readline();
+data = np.loadtxt(fname=f,delimiter = ';');
+X = data[:,0:10];
+#Converting it to binary classification
+Y = np.where(data[:,11] >= 7, 1, 0);
+
+#Split training/test sets
+X_train,X_test,Y_train,Y_test = train_test_split(X,Y,test_size=0.40);
+
+#Scaling features 
+scaler = preprocessing.StandardScaler().fit(X_train);
+X_train = scaler.transform(X_train);
+X_test = scaler.transform(X_test);
+
+#Algorithm being used
+clf = linear_model.SGDClassifier(loss="hinge", penalty="l1", n_iter=100)
+
+#Training the model
+clf.fit(X_train, Y_train);
+
+print clf.coef_
+print clf.intercept_
+
+#Predicting on test set
+Y_train_pred = clf.predict(X_test);
+
+#Printing out accuracy score
+print metrics.accuracy_score(Y_test,Y_train_pred);
+
+#Printing classification report(precision,recall,f1-score,support)
+print metrics.classification_report(Y_test,Y_train_pred)
+
+#Printing confusion matrix
+print metrics.confusion_matrix(Y_test,Y_train_pred)
+
+
+#Results:
+#[[ 0.03765805 -0.03462266  0.          0.92691114 -0.19279578  0.          0.
+#  -1.11323087  0.42018448  0.11849098  0.00878359]]
+#[-1.273086]
+#0.798469387755
+#             precision    recall  f1-score   support
+#
+#          0       0.80      0.98      0.88      1532
+#          1       0.69      0.14      0.24       428
+#
+#avg / total       0.78      0.80      0.74      1960
+#
+#[[1504   28]
+# [ 367   61]]

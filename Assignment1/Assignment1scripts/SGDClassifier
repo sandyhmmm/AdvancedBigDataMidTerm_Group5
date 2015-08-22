@@ -1,0 +1,23 @@
+from pyspark import SparkContext, SQLContext
+import numpy as np
+from sklearn import linear_model
+
+
+#Load and parse the data 
+sparkHome = os.environ.get('SPARK_HOME')
+fileLocation = sparkHome + "/Assignment1/winequality-white.csv";
+sc = SparkContext(appName="Classification")
+
+
+f = open(fileLocation);
+f.readline();
+data = np.loadtxt(fname=f,delimiter = ';');
+X = data[:,0:11];
+Y = np.where(data[:,11] > 7, 1, 0);
+X_train,X_test,Y_train,Y_test = train_test_split(X,Y,test_size=0.30);
+clf = linear_model.SGDClassifier();
+clf.fit(X_train, Y_train);
+print clf.coef_
+print clf.intercept_
+Y_train_pred = clf.predict(X_test);
+print metrics.accuracy_score(Y_test,Y_train_pred);

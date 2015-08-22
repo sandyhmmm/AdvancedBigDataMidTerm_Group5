@@ -1,0 +1,8 @@
+from pyspark.mllib.feature import StandardScaler
+
+
+label = trainingData.map(lambda x: x.label)
+features = trainingData.map(lambda x: x.features)
+scaler1 = StandardScaler().fit(features)
+trainingData = label.zip(scaler1.transform(features))
+trainingData = trainingData.map(lambda (x,y) : LabeledPoint(x,y))

@@ -1,0 +1,47 @@
+from pyspark import SparkContext, SQLContext
+import numpy as np
+from sklearn import linear_model
+from sklearn.cross_validation import train_test_split
+import pandas as pd
+from sklearn import metrics
+from sklearn.cross_validation import cross_val_score, KFold
+from sklearn.pipeline import Pipeline
+
+
+f = open(fileLocation);
+f.readline();
+data = np.loadtxt(fname=f,delimiter = ';');
+X = data[:,0:11];
+Y = np.where(data[:,11] >= 7, 1, 0);
+#X_train,X_test,Y_train,Y_test = train_test_split(X,Y,test_size=0.40);
+
+#clf.fit(X_train, Y_train);
+#print clf.coef_
+#print clf.intercept_
+#Y_train_pred = clf.predict(X_test);
+
+#create a composite estimator made by a pipeline of the standardization and the linear model
+#clf = Pipeline([
+#        ('scaler',StandardScaler()),
+#        ('linear_model',SGDClassifier())
+#        ]);
+#create a k-fold cross validation iterator of k=5 folds
+#cv = KFold(X.shape[0],5,shuffle=True,random_state=33)
+#scores = cross_val_score(clf,X,Y,cv=cv)
+#print scores
+#print metrics.accuracy_score(Y_test,Y_train_pred);
+#print metrics.classification_report(Y_test,Y_train_pred)
+#print metrics.confusion_matrix(Y_test,Y_train_pred)
+
+X_train,X_test,Y_train,Y_test = train_test_split(X,Y,test_size=0.30);
+clf = linear_model.SGDClassifier();
+clf.fit(X_train,Y_train);
+linear_model.SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1,
+        eta0=0.0, fit_intercept=True, l1_ratio=0.15,
+        learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
+        penalty='l1', power_t=0.5, random_state=None, shuffle=True,
+        verbose=0, warm_start=False);
+Y_train_pred = clf.predict(X_test);
+print metrics.accuracy_score(Y_test,Y_train_pred);
+print metrics.classification_report(Y_test,Y_train_pred)
+print metrics.confusion_matrix(Y_test,Y_train_pred)

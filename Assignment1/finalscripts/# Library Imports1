@@ -1,0 +1,37 @@
+# Library Imports
+
+from pyspark.mllib.classification import SVMWithSGD, SVMModel
+
+from pyspark.mllib.regression import LabeledPoint
+
+from pyspark import SparkContext
+
+# Load and parse the data
+
+def parsePoint(line):
+
+    values = [float(x) for x in line.split(';')]
+
+    return LabeledPoint(values[11], values[0:10])
+
+sc = SparkContext("local", "SVMWithSGD")
+
+data = sc.textFile("/Assignment1/winequality-white.csv")
+
+parsedData = data.map(parsePoint)
+
+#Split training/test sets
+
+(trainingData, testData) = parsedData.randomSplit([0.6, 0.4])
+
+#Scaling features 
+
+label = trainingData.map(lambda x: x.label)
+
+features = trainingData.map(lambda x: x.features)
+
+scaler1 = StandardScaler().fit(features)
+
+trainingData = label.zip(scaler1.transform(features))
+
+trainingData = trainingData.map(lambda (x,y) : LabeledPoint(x,y))

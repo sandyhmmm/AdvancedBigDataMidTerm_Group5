@@ -1,0 +1,20 @@
+import org.apache.spark.mllib.classification.SVMModel
+import org.apache.spark.mllib.classification.SVMWithSGD
+import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
+import org.apache.spark.mllib.util.MLUtils
+sparkHome = os.environ.get('SPARK_HOME')
+fileLocation = sparkHome + "/Assignment1/winequality-white.csv";
+sc = SparkContext(appName="Classification");
+val data = sc.textFile(fileLocation);
+
+val labelPoint = data.map(l=>{
+     val parts = l.split(';')
+  var t=tf.transform(parts.tail.map(x => x).sliding(2).toSeq)
+  LabeledPoint(parts(0).toDouble,t )
+
+}).cache()
+labelPoint.count()
+
+#val data = MLUtils.loadLibSVMFile(sc, labelPoint);
+
+

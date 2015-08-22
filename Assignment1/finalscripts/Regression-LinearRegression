@@ -1,0 +1,48 @@
+import numpy as np
+from sklearn import linear_model
+from sklearn.cross_validation import train_test_split
+from sklearn import metrics
+from sklearn import preprocessing
+
+
+#Load and parse the data 
+sparkHome = os.environ.get('SPARK_HOME')
+fileLocation = sparkHome + "/Assignment1/winequality-white.csv";
+f = open(fileLocation);
+f.readline();
+data = np.loadtxt(fname=f,delimiter = ';');
+X = data[:,0:10];
+Y = data[:,11];
+
+#Split training/test sets
+X_train,X_test,Y_train,Y_test = train_test_split(X,Y,test_size=0.40);
+
+#Scaling features 
+scaler = preprocessing.StandardScaler().fit(X_train);
+X_train = scaler.transform(X_train);
+X_test = scaler.transform(X_test);
+
+
+#Algorithm being used
+regr = linear_model.LinearRegression();
+
+
+#Training the model
+regr.fit(X_train, Y_train);
+
+
+print regr.coef_
+print regr.intercept_
+
+#Predicting and printing out sqrt of mean of sum of squares and Variance
+print("Residual sqrt of sum of squares: %.2f"
+      % np.sqrt(np.mean((regr.predict(X_test) - Y_test) ** 2)))
+# Explained variance score: 1 is perfect prediction
+print('Variance score: %.2f' % regr.score(X_test, Y_test))
+
+Results:
+[ 0.09479933 -0.19100205  0.00916143  0.48986622 -0.00762382  0.05241288
+ -0.00422568 -0.57875267  0.13344574  0.05576692  0.16716046]
+5.8747447243
+Residual sum of squares: 0.76
+Variance score: 0.26
